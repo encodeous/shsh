@@ -50,12 +50,12 @@
         {
             Message = @<p>@($"The shortcode may only contain alphanumeric characters!")</p>;
         }
-        else if (!Uri.TryCreate(RedirectUrl, UriKind.Absolute, out _))
-        {
-            Message = @<p>@($"The uri \"{RedirectUrl}\" is not a valid uri string!")</p>;
-        }
         else
         {
+            if (!Uri.TryCreate(RedirectUrl, UriKind.Absolute, out _))
+            {
+                RedirectUrl = "http://" + RedirectUrl;
+            }
             shortener.Create(RedirectUrl, ShortUrl);
             Message = @<p style="display: inline-block">
                           @($"The shortcode has been created! You can visit the shortcode at ")
