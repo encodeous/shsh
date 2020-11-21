@@ -1,0 +1,70 @@
+﻿@page "/"
+@using shortener.Data
+@using System.Text.RegularExpressions
+@inject IMatDialogService MatDialogService
+<div class="main-content center">
+    <h1>shShortener</h1>
+    <div style="display: inline-block; width: 40%">
+        <MatTextField style="width: 65%" @bind-Value="RedirectUrl" Label="Url"></MatTextField>
+        <MatTextField style="width: 20%" @bind-Value="ShortUrl" Label="Shortlink"></MatTextField>
+        <MatButton Class="create" OnClick="OnCreate">Create</MatButton>
+    </div>
+    <br/>
+    @Message
+</div>
+
+<div class="footer">
+    <a class="footer-text" href="https://github.com/encodeous/shsh">
+        View on GitHub
+    </a>
+    <a class="footer-text-right" href="https://encodeous.ca/">
+        Encodeous
+    </a>
+</div>
+
+@code{
+
+    [Inject]
+    public ShortenerService shortener { get; set; }
+    public RenderFragment Message;
+    public string ShortUrl;
+    public string RedirectUrl;
+
+    protected override void OnInitialized()
+    {
+        ShortUrl = shortener.GetRandomId();
+    }
+
+    private async Task OnCreate()
+    {
+        Regex r = new Regex("^[a-zA-Z0-9]*$");
+        if (shortener.Collision(ShortUrl))
+        {
+            Message = @<p>@($"The specified Short Code \"{ShortUrl}\" already exists!")</p>;
+        }
+        else if(string.IsNullOrWhiteSpace(RedirectUrl))
+        {
+            Message = @<p>@($"Please enter a redirect url!")</p>;
+        }
+        else if (!r.IsMatch(ShortUrl))
+        {
+            Message = @<p>@($"The shortcode may only contain alphanumeric characters!")</p>;
+        }
+        else if (!Uri.TryCreate(RedirectUrl, UriKind.Absolute, out _))
+        {
+            Message = @<p>@($"The uri \"{RedirectUrl}\" is not a valid uri string!")</p>;
+        }
+        else
+        {
+            shortener.Create(RedirectUrl, ShortUrl);
+            Message = @<p style="display: inline-block">
+                          @($"The shortcode has been created! You can visit the shortcode at ")
+                          <a href="@($"https://shsh.ml/{ShortUrl}")">
+                              @($"https://shsh.ml/{ShortUrl}")
+                          </a>
+                          <br/>
+                          You may also append /stat to your shortcode for more information.
+                      </p>;
+        }
+    }
+}
